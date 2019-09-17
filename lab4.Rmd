@@ -1,0 +1,221 @@
+---
+title: "Lab 4 -- Visualizing Model Assumptions"
+author: "Your Group Names Here (include last names!)"
+date: "Due: September 24 by 5pm"
+output: html_document
+---
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(readxl)
+
+drunk <- read_xlsx("data/Impaired_Driving_Death_Rate.xlsx")
+
+```
+
+For this lab we will look at the rate of deaths by age/gender 
+(per 100,000 population) for people killed in crashes involving a driver 
+with BAC =>0.08%. These data come from the CDC (Center for Disease Control and 
+Prevention) for the years 2012 and 2014.  
+
+Data for 2012 were obtained from the Fatality Analysis Reporting System (FARS) 
+and data for 2014 were obtained from the National Highway Traffic 
+Administration's (NHTSA) Fatality Analysis Reporting System (FARS). Blank cells 
+indicate data are suppressed. Fatality rates based on fewer than 20 deaths are suppressed.
+
+
+# Modeling Differences in Fatalities between 2012 and 2014   
+
+We could investigate if the rate of deaths (per 100,000 people)  
+from drunk driving has changed between 2012 and 2014.   
+
+```{r}
+
+drunk_all_years <- drunk %>% 
+  # selecing only the two columns with data on all deaths for 2012 & 2014 
+  select(`All Ages, 2012`, `All Ages, 2014`) %>% 
+  # gathering the two columns into one column called year and another called deaths  
+  gather(`All Ages, 2012`:`All Ages, 2014`, key = "year", value = "deaths") %>% 
+  # changing the year column to be only 2012 and 2014 (removing the All Ages prefix)
+  mutate(year = case_when(year == "All Ages, 2012" ~ "2012", 
+                          year == "All Ages, 2014" ~ "2014")) 
+  
+```  
+
+Alright, to investigate the differences in the fatality rates in 2012 versus 
+2014, we could conduct a permutation test or a t-test.  
+
+__1. What are the assumptions of a permutation test?__  
+</br>
+
+
+
+</br>
+</br>
+
+__2. What assumption does a t-test have that a permutation test does not?__ 
+</br>
+
+
+
+</br>
+</br>
+
+
+## Visualizing Model Assumptions  
+
+```{r, warning = FALSE}
+drunk_all_years %>% 
+  # pipe dataset into the plot
+  ggplot(aes(x = year, y = deaths)) + 
+  # specify x and y variables 
+  geom_violin(aes(fill = year)) + 
+  # specify how the violins should be colored 
+  geom_jitter(width = 0.1) + 
+  # adds data points on top of the violins   
+  theme(legend.position = "none")  
+  # removes legend from plot, since it is redundant with x-axis label
+```
+
+__3. What assumption does this plot help you assess?__ 
+</br>
+
+
+
+</br>
+</br>
+
+
+The assumption of normally distributed residuals (or the responses) 
+can be kind of tricky to figure out! Let's look at the same plot as above, 
+just flipped around. This coordinate flip makes it a bit easier to visualize 
+the distributions of the fatality rates for each year.    
+
+```{r, warning = FALSE}
+drunk_all_years %>% 
+  # pipe dataset into the plot
+  ggplot(aes(x = year, y = deaths)) + 
+  # specify x and y variables 
+  geom_violin(aes(fill = year)) + 
+  # specify how the violins should be colored 
+  geom_jitter(width = 0.1) + 
+  # adds data points on top of the violins   
+  coord_flip() + 
+  # flips the coordinates (x to y, y to x)
+  theme(legend.position = "none")  
+  # removes legend from plot, since it is redundant with x-axis label
+```
+
+__4. Do you believe the assumption of normally distributed responses is violated? Why or why not?__ 
+</br>
+
+
+</br>
+</br>
+
+
+## Training Models 
+
+
+```{r, warning = FALSE}
+library(infer)
+
+# CONDUCTING A T-TEST
+
+drunk_all_years %>% 
+  # t_test gives a tidier output than t.test
+  t_test(deaths ~ year, # specify response ~ explanatory 
+         order = c("2014", "2012"),  # specify order of subtraction
+         alternative = "two_sided",  # specify direction of alternative 
+         mu = 0, # specify mean in null hypothesis (if 2104 = 2012, then 2014 - 2012 = 0)
+         conf_int = TRUE, # specify if you want a confidence interval (TRUE = yes, FALSE = no)
+         conf_level = 0.99 #specify the confidence level to be used for the interval 
+  )
+
+
+# CONDUCTING A PERMUATION TEST  
+
+# Step 1: Calculate observed difference in mean fatality 
+obs_diff <- drunk_all_years %>% 
+  specify(deaths ~ year) %>% 
+  calculate(stat = "diff in means", 
+            order = c("2014", "2012")
+            )
+
+# Step 2: Generate permuted differences in mean fatality  
+permute <- drunk_all_years %>% 
+  specify(deaths ~ year) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 5000, type = "permute") %>% 
+  calculate(stat = "diff in means", 
+            order = c("2014", "2012")
+            ) 
+
+# Step 3: Calculate the p-value based on permuted differences in means 
+permute %>% # using the vector of permuted differences in means
+  get_p_value(obs_stat = obs_diff, # declare the observed difference in means  
+              direction = "two_sided" # state the direction for the test
+              )
+```
+
+
+__5. Do the results of the two tests differ? Why do you believe this is the case?__ 
+</br>
+
+
+
+</br>
+</br>
+
+# Your Turn: Modeling Differences in Fatalities Between Sexes  
+
+We could investigate if the rate of deaths (per 100,000 people) in 2014 
+for males and females differs. Now, instead of comparing across years, we are 
+comparing across sexes within the *same* year. 
+
+
+## Gathering 2014 Data 
+
+First, we need to gather the two columns on Male and Female fatalities in 2014. 
+Using the code above, write code to:  
+
+1. Select the `Male, 2014` and `Female, 2014` columns  
+2. Transform these columns from wide format to long format, specifying a new key 
+that is relevant to the variables being gathered  
+3. Change the values of the variable you named (in the `key` argument of 
+`gather`) to take on values of "Male" and "Female" instead  
+
+__6. Insert your code here!__ 
+
+```{r}
+
+```  
+
+</br>
+</br>
+
+Next, we need to investigate what type of procedure we should use to test if there 
+is a difference in fatality rates for males versus females. To do this, we need 
+to create plots to determine how violate the model's assumptions are.  
+
+__7. Create a side-by-side violin plot of the fatality rates for the two sexes.__ 
+
+```{r}
+
+
+```  
+
+
+</br>
+</br>
+
+__8. Determine how violated each of the assumptions for conducting a t-test is.__ 
+
+* __Independence:__  
+
+
+* __Normality of Errors/Response:__  
+
+
+* __Equal Variance:__  
+
+
