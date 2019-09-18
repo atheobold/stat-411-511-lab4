@@ -39,7 +39,9 @@ drunk_all_years <- drunk %>%
   gather(`All Ages, 2012`:`All Ages, 2014`, key = "year", value = "deaths") %>% 
   # changing the year column to be only 2012 and 2014 (removing the All Ages prefix)
   mutate(year = case_when(year == "All Ages, 2012" ~ "2012", 
-                          year == "All Ages, 2014" ~ "2014")) 
+                          year == "All Ages, 2014" ~ "2014")) %>% 
+  # filtering out any years with NA values for fatalities 
+  filter(is.na(deaths) == FALSE)
   
 ```  
 
@@ -86,23 +88,35 @@ __3. What assumption does this plot help you assess?__
 </br>
 
 
-The assumption of normally distributed residuals (or the responses) 
-can be kind of tricky to figure out! Let's look at the same plot as above, 
-just flipped around. This coordinate flip makes it a bit easier to visualize 
-the distributions of the fatality rates for each year.    
+The assumption of normally distributed residuals (or the responses) can be kind
+of tricky to figure out! Let's look at a plot of the residuals from the model 
+fit to these data. To obtain the residuals from the data model, we need to carry 
+out the following steps:  
+
+1. Fit a model using `lm`, with a quantitative response and a categorical 
+explanatory  
+2. Pull off the residuals from the model and store in a new variable in the 
+dataset  
+
+Once we've done these steps, we can create a density plot or histogram of the 
+model's residuals. Using this plot, we can assess the assumption of normality 
+of residuals!  
 
 ```{r, warning = FALSE}
+# Fit a linear model to the data, with quant response and categor explanatory 
+drunk_lm <- lm(deaths ~ year, data = drunk_all_years)
+
 drunk_all_years %>% 
-  # pipe dataset into the plot
-  ggplot(aes(x = year, y = deaths)) + 
-  # specify x and y variables 
-  geom_violin(aes(fill = year)) + 
-  # specify how the violins should be colored 
-  geom_jitter(width = 0.1) + 
-  # adds data points on top of the violins   
-  coord_flip() + 
-  # flips the coordinates (x to y, y to x)
-  theme(legend.position = "none")  # removes legend from plot, since it is redundant with x-axis label
+  # Create a new variable that's the residuals from the linear model 
+  mutate(residuals = residuals(drunk_lm)) %>% 
+  # Plot a density plot of the residuals 
+  ggplot(aes(x = residuals)) +
+  # Choose your color! 
+  geom_density(fill = "tomato")
+
+# The standard base R plot for assessing normality of residuals  
+plot(drunk_lm, which = 2)
+
 ```
 
 __4. Do you believe the assumption of normally distributed responses is violated? Why or why not?__ 
