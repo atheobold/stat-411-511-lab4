@@ -5,9 +5,11 @@ date: "Due: September 24 by 5pm"
 output: html_document
 ---
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
+# loading packages needed for the data wrangling and visualization 
 library(tidyverse)
 library(readxl)
 
+# loading in data for the lab
 drunk <- read_xlsx("data/Impaired_Driving_Death_Rate.xlsx")
 
 ```
@@ -17,16 +19,16 @@ For this lab we will look at the rate of deaths by age/gender
 with BAC =>0.08%. These data come from the CDC (Center for Disease Control and 
 Prevention) for the years 2012 and 2014.  
 
-Data for 2012 were obtained from the Fatality Analysis Reporting System (FARS) 
-and data for 2014 were obtained from the National Highway Traffic 
+Data for 2012 and 2014 were obtained from the National Highway Traffic 
 Administration's (NHTSA) Fatality Analysis Reporting System (FARS). Blank cells 
-indicate data are suppressed. Fatality rates based on fewer than 20 deaths are suppressed.
+indicate data are suppressed. Fatality rates based on fewer than 20 deaths are 
+suppressed.
 
 
 # Modeling Differences in Fatalities between 2012 and 2014   
 
-We could investigate if the rate of deaths (per 100,000 people)  
-from drunk driving has changed between 2012 and 2014.   
+We could investigate if the rate of deaths (per 100,000 people) from drunk
+driving has changed between 2012 and 2014.   
 
 ```{r}
 
@@ -63,7 +65,7 @@ __2. What assumption does a t-test have that a permutation test does not?__
 
 ## Visualizing Model Assumptions  
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, results = 'hold'}
 drunk_all_years %>% 
   # pipe dataset into the plot
   ggplot(aes(x = year, y = deaths)) + 
@@ -72,8 +74,7 @@ drunk_all_years %>%
   # specify how the violins should be colored 
   geom_jitter(width = 0.1) + 
   # adds data points on top of the violins   
-  theme(legend.position = "none")  
-  # removes legend from plot, since it is redundant with x-axis label
+  theme(legend.position = "none")  # removes legend from plot, since it is redundant with x-axis label
 ```
 
 __3. What assumption does this plot help you assess?__ 
@@ -101,8 +102,7 @@ drunk_all_years %>%
   # adds data points on top of the violins   
   coord_flip() + 
   # flips the coordinates (x to y, y to x)
-  theme(legend.position = "none")  
-  # removes legend from plot, since it is redundant with x-axis label
+  theme(legend.position = "none")  # removes legend from plot, since it is redundant with x-axis label
 ```
 
 __4. Do you believe the assumption of normally distributed responses is violated? Why or why not?__ 
@@ -127,7 +127,7 @@ drunk_all_years %>%
          order = c("2014", "2012"),  # specify order of subtraction
          alternative = "two_sided",  # specify direction of alternative 
          mu = 0, # specify mean in null hypothesis (if 2104 = 2012, then 2014 - 2012 = 0)
-         conf_int = TRUE, # specify if you want a confidence interval (TRUE = yes, FALSE = no)
+         conf_int = FALSE, # specify if you want a confidence interval (TRUE = yes, FALSE = no)
          conf_level = 0.99 #specify the confidence level to be used for the interval 
   )
 
