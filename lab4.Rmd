@@ -79,10 +79,19 @@ drunk_all_years %>%
   theme(legend.position = "none")  # removes legend from plot, since it is redundant with x-axis label
 ```
 
-__3. What assumption does this plot help you assess?__ 
+__3. What assumption(s) does this plot help you assess? What information do you see in the plot that is not included in the table of standard deviations below?__ 
 </br>
 
 
+
+</br>
+</br>
+
+```{r}
+drunk_all_years %>% 
+  group_by(year) %>% 
+  summarize(sd = sd(deaths))
+```
 
 </br>
 </br>
@@ -112,7 +121,9 @@ drunk_all_years %>%
   # Plot a density plot of the residuals 
   ggplot(aes(x = residuals)) +
   # Choose your color! 
-  geom_density(fill = "tomato")
+  geom_density(fill = "tomato") + 
+  # Separate density plots for each year
+  facet_wrap(~ year)
 
 # The standard base R plot for assessing normality of residuals  
 plot(drunk_lm, which = 2)
@@ -146,12 +157,12 @@ drunk_all_years %>%
   )
 
 
-# CONDUCTING A PERMUATION TEST  
+# CONDUCTING A PERMUATION TEST
 
 # Step 1: Calculate observed difference in mean fatality 
 obs_diff <- drunk_all_years %>% 
   specify(deaths ~ year) %>% 
-  calculate(stat = "diff in means", 
+  calculate(stat = "t", 
             order = c("2014", "2012")
             )
 
@@ -160,7 +171,7 @@ permute <- drunk_all_years %>%
   specify(deaths ~ year) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 5000, type = "permute") %>% 
-  calculate(stat = "diff in means", 
+  calculate(stat = "t", 
             order = c("2014", "2012")
             ) 
 
